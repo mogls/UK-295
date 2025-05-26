@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "bl": "^6.1.0",
+    "express": "^5.1.0",
     "strftime": "^0.10.3"
   }
 }
