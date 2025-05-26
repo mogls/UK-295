@@ -1,0 +1,16 @@
+{
+  "name": "uk-295",
+  "version": "1.0.0",
+  "description": "NodeJs Backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test index.js"
+  },
+  "author": "Miguel Seara",
+  "license": "MIT",
+  "dependencies": {
+    "bl": "^6.1.0",
+    "strftime": "^0.10.3"
+  }
+}
