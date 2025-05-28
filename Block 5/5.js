@@ -12,7 +12,7 @@ let lendId = 0;
 
 let books = {};
 let lends = {};
-let returnedLends = [];
+let activeLends = [];
 
 function addBook({ title, year, author }) {
     if (!title || !year || !author) {
@@ -31,8 +31,22 @@ function checkISBN(isbn) {
     return books.hasOwnProperty(isbn);
 }
 
+function isActivelyLent(isbn) {
+    return activeLends.find((lend) => lend.isbn == isbn);
+}
+
+function countCustomerLends(customer_id) {
+    return activeLends.reduce((sum, lend) => {
+        return parseInt(lend.customer_id) == customer_id ? sum + 1 : sum;
+    }, 1);
+}
+
+function checkLendId(id) {
+    return lends.hasOwnProperty(id);
+}
+
 function lendBook({ customer_id, isbn }) {
-    if (!customer_id || !isbn) {
+    if (customer_id == undefined || isbn == undefined) {
         throw new Error("Requires both 'customer_id' and 'isbn'");
     }
 
@@ -40,21 +54,22 @@ function lendBook({ customer_id, isbn }) {
         throw new Error("Cannot lend book. The requested isbn doesn't exist");
     }
 
+    if (isActivelyLent(isbn)) {
+        throw new Error("Cannot lend book as it has already been lent");
+    }
+
+    if (countCustomerLends(customer_id) > 3) {
+        throw new Error("Customer cannot lend more than 3 books at a time");
+    }
+
     const borrowed_at = new Date();
 
     lends[lendId] = { customer_id, isbn, borrowed_at, returned_at: null };
+    activeLends.push({ isbn, lendId, customer_id });
 
     lendId++;
 
     return lends[lendId - 1]; // return lending information
-}
-
-function checkReturningLendId(id) {
-    return returnedLends.includes(id);
-}
-
-function checkLendId(id) {
-    return lends.hasOwnProperty(id);
 }
 
 addBook({ title: "Be what may", year: 2002, author: "Heather Brown" });
@@ -155,8 +170,28 @@ app.post("/lends", (req, res) => {
         const newLend = lendBook(body);
         res.json(newLend);
     } catch (error) {
-        res.status(422).json({ error });
+        console.error(error);
+        res.status(422).json({ error: error.message });
     }
+});
+
+app.delete("/lends/:id", (req, res) => {
+    const { id } = req.params;
+    const isbn = lends[id].isbn;
+
+    console.log("id: " + id);
+    console.log("lends[id].isbn: " + lends[id].isbn);
+
+    if (!isActivelyLent(isbn)) {
+        res.status(422).json({ error: "This book has already been returned." });
+        return;
+    }
+
+    activeLends = activeLends.filter((lend) => !(lend.isbn == isbn && lend.lendId == id));
+
+    lends[id].returned_at = new Date();
+
+    res.sendStatus(200);
 });
 
 app.listen(port, () => {
