@@ -1,9 +1,7 @@
 const express = require("express");
-const strftime = require("strftime");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
-const { error } = require("console");
 
 const app = express();
 const port = 8080;
@@ -41,7 +39,7 @@ let me = {
 };
 
 app.use("/images", express.static(path.join(__dirname, "images")));
-app.use("/images", express.static(path.join(__dirname, "public")));
+app.use("/public", express.static(path.join(__dirname, "public")));
 
 app.use(express.json());
 app.use(express.urlencoded());
@@ -127,7 +125,10 @@ app.get("/secret2", (req, res) => {
 app.get("/secret3", (req, res) => {
     const auth = req.headers.authorization;
 
-    if (auth.split(" ")[0] !== "Basic") res.sendStatus(401);
+    if (auth.split(" ")[0] !== "Basic") {
+        res.sendStatus(401);
+        return;
+    };
 
     const [username, password] = atob(auth.split(" ")[1]).split(":");
 

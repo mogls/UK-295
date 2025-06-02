@@ -1,14 +1,63 @@
-const express = require("express");
-const swaggerUi = require("swagger-ui-express");
-const swaggerDocument = require("./swagger.json");
+import express, { json, urlencoded } from "express";
+import { serve, setup } from "swagger-ui-express";
+import session from "express-session";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import mysql from "mysql2/promise";
+import bcrypt, { hash as _hash } from "bcrypt";
+import { configDotenv } from "dotenv";
+import fs from "fs/promises";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const data = await fs.readFile("./swagger.json", "utf-8");
+const swaggerDocument = JSON.parse(data);
+
+configDotenv();
 
 const app = express();
 const port = 3000;
 
-app.use(express.json());
-app.use(express.urlencoded());
+const saltRounds = 10;
 
-app.use("/swagger-ui", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+const hash = await _hash(process.env.PASSWORD, saltRounds);
+
+app.use(json());
+app.use(urlencoded());
+
+app.use(
+    session({
+        secret: process.env.SECRET,
+        resave: false,
+        saveUninitialized: false,
+    })
+);
+
+app.use("/swagger-ui", serve, setup(swaggerDocument));
+
+const connection = await mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: process.env.DB_PASSWORD,
+    port: "3307",
+    database: "users",
+});
+
+try {
+    const [results] = await connection.execute("SELECT * FROM users");
+
+    if (!results) {
+        connection.execute("INSERT INTO users (email, password) VALUES (?, ?)", [
+            process.env.EMAIL,
+            hash,
+        ]);
+    }
+
+} catch (err) {
+    console.log(err);
+}
+
 
 let isbn = 0;
 let lendId = 0;
@@ -44,10 +93,6 @@ function countCustomerLends(customer_id) {
     }, 1);
 }
 
-function checkLendId(id) {
-    return lends.hasOwnProperty(id);
-}
-
 function lendBook({ customer_id, isbn }) {
     if (customer_id == undefined || isbn == undefined) {
         throw new Error("Requires both 'customer_id' and 'isbn'");
@@ -73,6 +118,14 @@ function lendBook({ customer_id, isbn }) {
     lendId++;
 
     return lends[lendId - 1]; // return lending information
+}
+
+function authCheck(req, res, next) {
+    if (req.session.authenticated) {
+        next();
+    } else {
+        res.sendStatus(401);
+    }
 }
 
 addBook({ title: "Be what may", year: 2002, author: "Heather Brown" });
@@ -156,17 +209,17 @@ app.patch("/books/:isbn", (req, res) => {
     res.status(201).json(books[isbn]);
 });
 
-app.get("/lends", (req, res) => {
+app.get("/lends", authCheck, (req, res) => {
     res.json(lends);
 });
 
-app.get("/lends/:id", (req, res) => {
+app.get("/lends/:id", authCheck, (req, res) => {
     const { id } = req.params;
 
     res.json(lends[id]);
 });
 
-app.post("/lends", (req, res) => {
+app.post("/lends", authCheck, (req, res) => {
     const body = req.body;
 
     try {
@@ -178,7 +231,7 @@ app.post("/lends", (req, res) => {
     }
 });
 
-app.delete("/lends/:id", (req, res) => {
+app.delete("/lends/:id", authCheck, (req, res) => {
     const { id } = req.params;
     const isbn = lends[id].isbn;
 
@@ -192,6 +245,44 @@ app.delete("/lends/:id", (req, res) => {
     lends[id].returned_at = new Date();
 
     res.sendStatus(200);
+});
+
+app.get("/login", (req, res) => {
+    res.sendFile(join(__dirname, "login.html"));
+});
+
+app.post("/login", async (req, res) => {
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
+        res.status(401).send("Both email and password are required");
+        return;
+    }
+
+    const [rows] = await connection.execute("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
+
+    const correctPassword = await bcrypt.compare(password, rows[0].password)
+
+    if (rows && correctPassword) {
+        req.session.authenticated = true;
+        res.status(201).send("Login successfull");
+    } else {
+        res.status(401).send("Invalid credetials");
+    }
+});
+
+app.get("/verify", (req, res) => {
+    if (req.session.authenticated) {
+        res.send("You are logged in");
+    } else {
+        res.send("You are NOT logged in");
+    }
+});
+
+app.delete("/logout", (req, res) => {
+    req.session.authenticated = false;
+
+    res.sendStatus(204);
 });
 
 app.listen(port, () => {

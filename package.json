@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "NodeJs Backend",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "test": "node --test index.js"
@@ -10,14 +11,22 @@
   "author": "Miguel Seara",
   "license": "MIT",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bl": "^6.1.0",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-session": "^1.18.1",
     "multer": "^2.0.0",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.14.1",
     "strftime": "^0.10.3",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "eslint": "^9.28.0",
+    "globals": "^16.2.0",
     "swagger-autogen": "^2.23.7"
   }
 }
