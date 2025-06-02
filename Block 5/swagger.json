@@ -1,0 +1,345 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Book Lending API",
+    "description": "A simple API to manage books and lending records."
+  },
+  "host": "localhost:3000",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "tags": [
+    {
+      "name": "Books",
+      "description": "All book API's"
+    },
+    {
+      "name": "Lending",
+      "description": "All lending API's"
+    }
+  ],
+  "paths": {
+    "/books": {
+      "get": {
+        "tags": ["Books"],
+        "summary": "List all books",
+        "responses": {
+          "200": {
+            "description": "A list of books",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/Book"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Books"],
+        "summary": "Add a new book",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "book",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NewBook"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Book created",
+            "schema": {
+              "$ref": "#/definitions/Book"
+            }
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/books/{isbn}": {
+      "get": {
+        "tags": ["Books"],
+        "summary": "Get book by ISBN",
+        "parameters": [
+          {
+            "name": "isbn",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Book details",
+            "schema": {
+              "$ref": "#/definitions/Book"
+            }
+          },
+          "400": {
+            "description": "Book not found"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Books"],
+        "summary": "Replace a book by ISBN",
+        "parameters": [
+          {
+            "name": "isbn",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "book",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NewBook"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Book updated",
+            "schema": {
+              "$ref": "#/definitions/Book"
+            }
+          },
+          "400": {
+            "description": "Book not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Books"],
+        "summary": "Delete a book",
+        "parameters": [
+          {
+            "name": "isbn",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Book deleted"
+          },
+          "400": {
+            "description": "Book not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Books"],
+        "summary": "Update book fields",
+        "parameters": [
+          {
+            "name": "isbn",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "Not all fields are required, only ones set in body will be updated",
+            "in": "body",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/PartialBook"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Book updated",
+            "schema": {
+              "$ref": "#/definitions/Book"
+            }
+          },
+          "400": {
+            "description": "Book not found"
+          }
+        }
+      }
+    },
+    "/lends": {
+      "get": {
+        "tags": ["Lending"],
+        "summary": "List all lends",
+        "responses": {
+          "200": {
+            "description": "All lending records",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/Lend"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Lending"],
+        "summary": "Lend a book",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "lend",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LendRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lend created",
+            "schema": {
+              "$ref": "#/definitions/Lend"
+            }
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/lends/{id}": {
+      "get": {
+        "tags": ["Lending"],
+        "summary": "Get lend record",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lend record",
+            "schema": {
+              "$ref": "#/definitions/Lend"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Lending"],
+        "summary": "Return a lent book",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Book successfully returned"
+          },
+          "422": {
+            "description": "Book already returned"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Book": {
+      "type": "object",
+      "properties": {
+        "isbn": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "year": {
+          "type": "integer"
+        },
+        "author": {
+          "type": "string"
+        }
+      }
+    },
+    "NewBook": {
+      "type": "object",
+      "required": [
+        "title",
+        "year",
+        "author"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "year": {
+          "type": "integer"
+        },
+        "author": {
+          "type": "string"
+        }
+      }
+    },
+    "PartialBook": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "year": {
+          "type": "integer"
+        },
+        "author": {
+          "type": "string"
+        }
+      }
+    },
+    "LendRequest": {
+      "type": "object",
+      "required": [
+        "customer_id",
+        "isbn"
+      ],
+      "properties": {
+        "customer_id": {
+          "type": "integer"
+        },
+        "isbn": {
+          "type": "integer"
+        }
+      }
+    },
+    "Lend": {
+      "type": "object",
+      "properties": {
+        "customer_id": {
+          "type": "integer"
+        },
+        "isbn": {
+          "type": "integer"
+        },
+        "borrowed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "returned_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

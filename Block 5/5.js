@@ -1,11 +1,14 @@
 const express = require("express");
-const uuidv4 = require("uuid").v4;
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("./swagger.json");
 
 const app = express();
 const port = 3000;
 
 app.use(express.json());
 app.use(express.urlencoded());
+
+app.use("/swagger-ui", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 let isbn = 0;
 let lendId = 0;
@@ -101,7 +104,7 @@ app.post("/books", (req, res) => {
         const newBook = addBook(body);
 
         if (newBook) {
-            res.status(200).json(newBook);
+            res.status(201).json(newBook);
         }
     } catch (err) {
         console.error(err);
@@ -150,7 +153,7 @@ app.patch("/books/:isbn", (req, res) => {
     }
 
     books[isbn] = { ...books[isbn], ...body };
-    res.status(200).json(books[isbn]);
+    res.status(201).json(books[isbn]);
 });
 
 app.get("/lends", (req, res) => {
@@ -178,9 +181,6 @@ app.post("/lends", (req, res) => {
 app.delete("/lends/:id", (req, res) => {
     const { id } = req.params;
     const isbn = lends[id].isbn;
-
-    console.log("id: " + id);
-    console.log("lends[id].isbn: " + lends[id].isbn);
 
     if (!isActivelyLent(isbn)) {
         res.status(422).json({ error: "This book has already been returned." });
