@@ -2,6 +2,8 @@ import express, { json, urlencoded } from "express";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import { configDotenv } from "dotenv";
+import {serve, setup} from "swagger-ui-express";
+import fs from "fs/promises";
 
 configDotenv();
 
@@ -11,6 +13,11 @@ const PORT = 3000;
 app.use(json());
 app.use(urlencoded());
 app.use(cookieParser());
+
+const data = await fs.readFile("./swagger-output.json", "utf-8");
+const swaggerDocument = JSON.parse(data);
+
+app.use("/swagger-ui", serve, setup(swaggerDocument));
 
 /* 
 id: {
