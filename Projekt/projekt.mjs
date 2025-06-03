@@ -141,7 +141,7 @@ app.post("/login", (req, res) => {
         return;
     }
 
-    if (user === process.env.USER && password === process.env.PASSWORD) {
+    if (String(user).toLowerCase().match(/^\S+@\S+\.\S+$/) && password === process.env.PASSWORD) {
         const token = jwt.sign({ user }, process.env.SECRET, { expiresIn: "1h" });
         res.cookie("token", token, {
             httpOnly: true,
@@ -159,7 +159,6 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/verify", verifyToken, (req, res) => {
-    const user = req.user;
     const now = Math.floor(Date.now() / 1000);
     const exp = req.user.exp;
     const timeRemaining = exp - now;

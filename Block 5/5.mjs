@@ -80,7 +80,7 @@ function addBook({ title, year, author }) {
 
 function checkISBN(isbn) {
     // console.log(isbn);
-    return books.hasOwnProperty(isbn);
+    return Object.keys(books).includes(isbn);
 }
 
 function isActivelyLent(isbn) {
