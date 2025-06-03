@@ -24,6 +24,8 @@ id: {
 id: ...
 title: ...
 description: ...
+createdAt: ...
+completedAt: ...
 }
 */
 
@@ -32,7 +34,7 @@ const tasks = {};
 let taskId = 1;
 
 function createTask(title, description) {
-    tasks[taskId] = { id: taskId, title, description };
+    tasks[taskId] = { id: taskId, title, description, createdAt: new Date(), completedAt: null };
     taskId++;
     return tasks[taskId - 1];
 }
@@ -132,12 +134,16 @@ app.delete("/tasks/:id", verifyToken, (req, res) => {
         res.status(422).json({ error: `There is no task with id=${id}` });
         return;
     }
+    if (!tasks[id].completedAt) {
+        tasks[id].completedAt = new Date();
+        console.log("Completed task with id=", id);
+    
+        res.status(200).json(tasks[id]);
+    } else {
+        res.status(400).json({ error: `Task with id=${id} has already been completed` })
+    }
 
-    delete tasks[id];
 
-    console.log("Deleted task with id=", id);
-
-    res.status(200).json({ message: `Task with id=${id} deleted successfully` });
 });
 
 app.post("/login", (req, res) => {
